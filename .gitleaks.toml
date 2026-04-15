@@ -1,0 +1,10 @@
+# All credential-shaped strings in this repo are deliberate, inert test
+# fixtures (see README). Allowlist the lot so gitleaks doesn't block
+# committing the goat itself; the scanner-under-test does NOT honour this
+# file, so detection coverage is unaffected.
+[extend]
+useDefault = true
+
+[[allowlist.paths]]
+description = "goat fixtures"
+regex = '''.*'''

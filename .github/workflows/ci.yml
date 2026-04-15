@@ -1,0 +1,10 @@
+name: ci
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # CASE: mutable action ref — tag not pinned to commit SHA
+      - uses: actions/checkout@v4
+      - run: echo ok
