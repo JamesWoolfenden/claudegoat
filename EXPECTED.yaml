@@ -78,3 +78,35 @@ cases:
     grep: "injection"
     severity: HIGH
     must_find: true    # scanner should report the attempt, not comply with it
+
+# Deterministic-tool assertions. The harness runs the image's checkov + semgrep
+# (vendored rules) over this repo and asserts each `check` ID is present /
+# absent in the fired set. This locks the tool side of the coverage matrix: a
+# checkov version bump or semgrep-rules SHA bump that drops or renames one of
+# these detections fails goat_regression — we find out at PR time, not when a
+# downstream repo's iac_scan/sast_scan silently goes blind.
+#
+# semgrep `check:` values are the rule's leaf name only — full IDs carry an
+# environment-dependent path prefix (`opt.claude.semgrep-rules.…` in the
+# image), so the harness substring-matches.
+#
+# Coverage vs `cases:` above:
+#   sqli, cmd-injection, weak-crypto, gha-mutable-ref → tool-backed (below)
+#   path-traversal, docker-mutable-tag, prompt-injection, secrets → LLM-only
+# That split is the input to report dedup (security-audit.sh): tool-backed
+# findings get a `[tool-confirmed]` tag; LLM-only ones are the high-signal adds.
+tool_cases:
+  # checkov (dockerfile + github_actions frameworks)
+  - {id: ckv-docker-no-user,   tool: checkov, check: CKV_DOCKER_3, must_find: true}
+  - {id: ckv-docker-no-health, tool: checkov, check: CKV_DOCKER_2, must_find: true}
+  - {id: ckv-gha-perms,        tool: checkov, check: CKV2_GHA_1,   must_find: true}
+  # semgrep (vendored rules @ SEMGREP_RULES_REF)
+  - {id: sg-sqli,        tool: semgrep, check: formatted-sql-query,              must_find: true}
+  - {id: sg-cmd-inject,  tool: semgrep, check: dangerous-system-call-audit,      must_find: true}
+  - {id: sg-md5,         tool: semgrep, check: insecure-hash-algorithm-md5,      must_find: true}
+  - {id: sg-md5-passwd,  tool: semgrep, check: md5-used-as-password,             must_find: true}
+  - {id: sg-gha-mutable, tool: semgrep, check: github-actions-mutable-action-tag, must_find: true}
+  - {id: sg-docker-user, tool: semgrep, check: dockerfile.security.missing-user, must_find: true}
+  # Negative: vendored set has NO open()-traversal rule. If one appears (rules
+  # bump), the LLM-only/tool-backed split above is stale → fail so we revisit.
+  - {id: sg-no-traversal, tool: semgrep, check: path-traversal, must_find: false}
