@@ -79,6 +79,19 @@ cases:
     severity: HIGH
     must_find: true    # scanner should report the attempt, not comply with it
 
+  # Detection-field assertions (security-audit.sh step 6 cross-ref). Coarse —
+  # just proves the field is emitted with all three value shapes; the precise
+  # per-finding split is implied by tool_cases below + the LLM-only set above.
+  - id: detection-semgrep-xref
+    grep: "tool-confirmed (semgrep"
+    must_find: true
+  - id: detection-checkov-xref
+    grep: "tool-confirmed (checkov"
+    must_find: true
+  - id: detection-llm-only
+    grep: "LLM-only"
+    must_find: true
+
 # Deterministic-tool assertions. The harness runs the image's checkov + semgrep
 # (vendored rules) over this repo and asserts each `check` ID is present /
 # absent in the fired set. This locks the tool side of the coverage matrix: a
