@@ -85,17 +85,17 @@ cases:
   - id: detection-semgrep-xref
     grep: "tool-confirmed (semgrep"
     must_find: true
-  - id: detection-checkov-xref
-    grep: "tool-confirmed (checkov"
+  - id: detection-holden-xref
+    grep: "tool-confirmed (holden"
     must_find: true
   - id: detection-llm-only
     grep: "LLM-only"
     must_find: true
 
-# Deterministic-tool assertions. The harness runs the image's checkov + semgrep
+# Deterministic-tool assertions. The harness runs the image's holden + semgrep
 # (vendored rules) over this repo and asserts each `check` ID is present /
 # absent in the fired set. This locks the tool side of the coverage matrix: a
-# checkov version bump or semgrep-rules SHA bump that drops or renames one of
+# holden version bump or semgrep-rules SHA bump that drops or renames one of
 # these detections fails goat_regression — we find out at PR time, not when a
 # downstream repo's iac_scan/sast_scan silently goes blind.
 #
@@ -109,10 +109,12 @@ cases:
 # That split is the input to report dedup (security-audit.sh): tool-backed
 # findings get a `[tool-confirmed]` tag; LLM-only ones are the high-signal adds.
 tool_cases:
-  # checkov (dockerfile + github_actions frameworks)
-  - {id: ckv-docker-no-user,   tool: checkov, check: CKV_DOCKER_3, must_find: true}
-  - {id: ckv-docker-no-health, tool: checkov, check: CKV_DOCKER_2, must_find: true}
-  - {id: ckv-gha-perms,        tool: checkov, check: CKV2_GHA_1,   must_find: true}
+  # holden (dockerfile + github_actions)
+  - {id: hld-docker-digest,    tool: holden, check: HLD_DF_001,  must_find: true}
+  - {id: hld-docker-no-user,   tool: holden, check: HLD_DF_003,  must_find: true}
+  - {id: hld-gha-perms,        tool: holden, check: HLD_CI_007,  must_find: true}
+  - {id: hld-gha-timeout,      tool: holden, check: HLD_CI_006,  must_find: true}
+  - {id: hld-gha-mutable,      tool: holden, check: HLD_CI_004,  must_find: true}
   # semgrep (vendored rules @ SEMGREP_RULES_REF)
   - {id: sg-sqli,        tool: semgrep, check: formatted-sql-query,              must_find: true}
   - {id: sg-cmd-inject,  tool: semgrep, check: dangerous-system-call-audit,      must_find: true}
